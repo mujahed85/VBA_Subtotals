@@ -1,0 +1,307 @@
+
+Sub MyMainSubRoutine()
+    InitColValues
+    ResetSumOfValues
+    curntPaidToWhom = Cells(minRows, colPaidToWhom)
+    allPaidToWhom(counterPaidToWhom) = curntPaidToWhom
+    SubTotalForMultiple
+End Sub
+Sub SubTotalForMultiple()
+    'Temporary Declarations
+    totalUniqueChqNo = Cells(minRows, colChequeNo)
+    totalUniqueDates = Cells(minRows, colDate)
+    '***********************************************
+    'For Analysis Phase I                          *
+    '***********************************************
+    AnalysisAndFillChequeNoDates
+    cntr = 0
+    ResetSumOfValues
+    ResetSubTotalValues
+    Dim loopsize As Integer
+    c_PaidToWhom = 1
+    loopsize = (maxRows + counterCheques + (counterDates * iGap))
+    For i = minRows To loopsize
+        If cntr = 0 Then
+            MyMainLogic
+        Else
+            cntr = cntr - 1
+        End If
+    Next i
+End Sub
+Sub AnalysisAndFillChequeNoDates()
+    For i = minRows To maxRows
+        'For Paid To Whom Subtotal
+        If curntPaidToWhom <> Cells(i, colPaidToWhom) Then
+            counterPaidToWhom = counterPaidToWhom + 1
+            allPaidToWhom(counterPaidToWhom) = Cells(i, colPaidToWhom)
+            
+            curntPaidToWhom = Cells(i, colPaidToWhom)
+            'totalUniqueDates = CStr(Cells(i, colDate)) + ":" + CStr(totalUniqueDates)
+        End If
+        
+        'This Data Selection For Total Unique Check Numbers in Current Sheet
+        If curntChequeNo <> Cells(i, colChequeNo) Then
+            counterCheques = counterCheques + 1
+            allCheques(counterCheques) = Cells(i, colChequeNo)
+            curntChequeNo = Cells(i, colChequeNo)
+            totalUniqueChqNo = CStr(Cells(i, colChequeNo)) + ":" + CStr(totalUniqueChqNo)
+        End If
+        
+        'This Data Selection For Total Unique Dates in Current Sheet
+        If curntDate <> Cells(i, colDate) Then
+            counterDates = counterDates + 1
+            allDates(counterDates) = Cells(i, colDate)
+            curntDate = Cells(i, colDate)
+            totalUniqueDates = CStr(Cells(i, colDate)) + ":" + CStr(totalUniqueDates)
+        End If
+    Next i
+End Sub
+Sub MyMainLogic()
+        cntr = 0
+        If Cells(i, colDate) = allDates(c_Date) Then
+            If Cells(i, colChequeNo) = allCheques(c_Cheque) Then
+                If Cells(i, colPaidToWhom) = allPaidToWhom(c_PaidToWhom) Then
+                    SumsOfEachRowInChequeNo
+                Else
+                    Rows(i).Insert
+                    Rows(CStr(i)).Font.Bold = True
+                    AssignValuesToCells
+                    ResetSumOfValues
+                    c_PaidToWhom = c_PaidToWhom + 1
+                End If
+            Else
+                c_Cheque = c_Cheque + 1
+                Range("A" + CStr(i)).EntireRow.Insert
+                Rows(CStr(i)).Font.Bold = True
+                AssignValuesToCells
+                ResetSumOfValues
+            End If
+        Else
+                c_Date = c_Date + 1
+                c_Cheque = c_Cheque + 1
+                Range("A" + CStr(CInt(i))).EntireRow.Insert
+                Rows(CStr(i)).Font.Bold = True
+                AssignValuesToCells
+                ResetSumOfValues
+                CreatePatternForDiffDates (i + 1)
+                ResetSubTotalValues
+                cntr = 26
+        End If
+End Sub
+Sub CreatePatternForDiffDates(iPattern As Integer)
+    'Add New Line Before SubTotals
+    Range("A" + CStr(iPattern)).EntireRow.Insert
+    Rows(CStr(iPattern)).Font.Bold = True
+    
+    'Empty Line
+    Range("A" + CStr(iPattern + 1)).EntireRow.Insert
+    Rows(CStr(iPattern + 1)).Font.Bold = True
+    
+    'Design Total Line Values
+    AssignAllSubtotalsTo (iPattern + 1)
+    
+    'Add New Line After SubTotals
+    Range("A" + CStr(iPattern + 2)).EntireRow.Insert
+    Rows(CStr(iPattern + 2)).Font.Bold = True
+    
+    'Create Summary Table...
+    createSummaryTable (iPattern + 3)
+End Sub
+Sub AssignAllSubtotalsTo(iPattern As Integer)
+    Cells(iPattern, colCodeNo + 1).Value = "Total: "
+    Cells(iPattern, colAmntOfEachVocher) = soTAmntOfEachVocher
+    Cells(iPattern, colInomeTax) = soTInomeTax
+    Cells(iPattern, colVATTax) = soTVATTax
+    Cells(iPattern, colRoyalty) = soTRoyalty
+    Cells(iPattern, colFSD) = soTFSD
+    Cells(iPattern, colLWF) = soTLWF
+    Cells(iPattern, colLBT) = soTLBT
+    Cells(iPattern, colPT) = soTPT
+    Cells(iPattern, colGovtIns) = soTGovtIns
+    Cells(iPattern, colSD) = soTSD
+    Cells(iPattern, colMaterialCost) = soTMaterialCost
+    Cells(iPattern, colTesting) = soTTesting
+    Cells(iPattern, colWithHeld) = soTWithHeld
+    Cells(iPattern, colTenderCost) = soTTenderCost
+    Cells(iPattern, colAMCFund) = soTAMCFund
+    Cells(iPattern, colFestAdv) = soTFestAdv
+    Cells(iPattern, colServiceTax) = soTServiceTax
+    Cells(iPattern, colOtherDed) = soTOtherDed
+    Cells(iPattern, colTotalDed) = soTTotalDed
+    Cells(iPattern, colAmtChq) = soTAmtChq
+End Sub
+Sub createSummaryTable(i As Integer)
+    Dim cntr As Integer
+    Dim strSumTotal As String
+    Dim totals As Currency
+    Dim openningBal, CollectionOfAMCFromOtherTaxes, TrnsfrAcntFromLBT, TrnsfrAcntFromOthers As Currency
+    openningBal = 0 ' CInt(InputBox("Enter Opening Balance", , "0"))
+    CollectionOfAMCFromOtherTaxes = 0 'CInt(InputBox("Enter Collection From Other Taxes", , "0"))
+    TrnsfrAcntFromLBT = 0 'CInt(InputBox("Enter Transfer Account From LBT", , "0"))
+    TrnsfrAcntFromOthers = 0 'CInt(InputBox("Enter Transfer Account From Others", , "0"))
+    cntr = 0
+    
+    totals = soTFSD + soTLWF + soTLBT + soTPT + soTGovtIns + soTSD + soTMaterialCost + soTTesting + soTWithHeld + soTTenderCost + _
+                soTAMCFund + soTFestAdv + soTServiceTax + soTOtherDed + openningBal + CollectionOfAMCFromOtherTaxes + TrnsfrAcntFromLBT + TrnsfrAcntFromOthers
+    '1.0.0 Add Description Line Here...
+    
+   
+    strSumTotal = "=sum("
+    'Add New Line Before Creating Subtotal Summary Table...
+    Range("A" + CStr(i)).EntireRow.Insert
+    Rows(CStr(i)).Font.Bold = False
+    Cells(i + cntr, 4) = "FSD"
+    Cells(i + cntr, 5) = soTFSD
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    
+    
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "LWF"
+    Cells(i + cntr, 5) = soTLWF
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "LBT"
+    Cells(i + cntr, 5) = soTLBT
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "PT"
+    Cells(i + cntr, 5) = soTPT
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "Govt.Insu."
+    Cells(i + cntr, 5) = soTGovtIns
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "S.D."
+    Cells(i + cntr, 5) = soTSD
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "Mat.Cost"
+    Cells(i + cntr, 5) = soTMaterialCost
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "Testing"
+    Cells(i + cntr, 5) = soTTesting
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "With Held"
+    Cells(i + cntr, 5) = soTWithHeld
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "Tender Cost"
+    Cells(i + cntr, 5) = soTTenderCost
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "AMC Fund"
+    Cells(i + cntr, 5) = soTAMCFund
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "Fest.Adv."
+    Cells(i + cntr, 5) = soTFestAdv
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "Service Tax"
+    Cells(i + cntr, 5) = soTServiceTax
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "Other Ded."
+    Cells(i + cntr, 5).Formula = soTOtherDed
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = ""     'Empty 1
+    Cells(i + cntr, 5) = "0"
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = ""
+    Cells(i + cntr, 5) = "0"
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+        
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = ""
+    Cells(i + cntr, 5) = 0
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "Openning Balance"
+    If lastClosingBalance = "" Then
+        lastClosingBalance = InputBox("Enter Starting Opening Balance", "Opening Balance")
+    End If
+    startOpenningBalance = lastClosingBalance
+    Cells(i + cntr, 5) = startOpenningBalance
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    Cells(i + cntr, 33) = "Expenditure "
+    Cells(i + cntr, 34).Formula = "=O" + CStr(i - 2) 'soTAmntOfEachVocher
+
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "Collection of Municipal Taxes Ward, Head Office & Other"
+    Cells(i + cntr, 5) = "0"
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    Cells(i + cntr, 33) = "Closing Balance"
+    
+
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "Transfer Amount from A/c LBT"
+    Cells(i + cntr, 5) = "0"
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr) + ","
+    Cells(i + cntr, 33) = "Total"
+    
+
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "Transfer Amount from other A/c"
+    Cells(i + cntr, 5) = "0"
+    strSumTotal = strSumTotal + "E" + CStr(i + cntr)
+    Cells(i + cntr, 31) = "Dy. Commissioner"
+    Cells(i + cntr, 27) = "Account Officer"
+
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+    Cells(i + cntr, 4) = "Total"
+    strSumTotal = strSumTotal + ")"
+    Cells(i + cntr, 5).Formula = strSumTotal    'totals
+    Cells(i + 18, 34).Formula = "=E" + CStr(i + 21) + "-O" + CStr(i - 2) 'totals - soTAmntOfEachVocher
+    Cells(i + 19, 34) = CStr(soTAmntOfEachVocher + (totals - soTAmntOfEachVocher))
+    Cells(i + cntr, 31) = "Municipal Corporation Aurangabad"
+    Cells(i + cntr, 27) = "Municipal Corporation Aurangabad"
+
+    cntr = cntr + 1
+    Range("A" + CStr(i + cntr)).EntireRow.Insert
+End Sub
+Private Sub CommandButton1_Click()
+    MyMainSubRoutine
+End Sub
+
+

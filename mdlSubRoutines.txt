@@ -1,0 +1,216 @@
+'All Column Declarations
+Public colDate, colPaidToWhom, colCodeNo, colAmntOfEachVocher, colInomeTax, colVATTax, colRoyalty, _
+colFSD, colLWF, colLBT, colPT, colGovtIns, colSD, colMaterialCost, _
+colTesting, colWithHeld, colTenderCost, colAMCFund, colFestAdv, _
+colServiceTax, colOtherDed, colTotalDed, colAmtChq, colChequeNo As Integer
+ 
+'Temporary Counters
+Public c_PaidToWhom As Integer
+ 
+'All Sum Of Declarations
+Public soAmntOfEachVocher, soInomeTax, soVATTax, soRoyalty, _
+    soFSD, soLWF, soLBT, soPT, soGovtIns, soSD, soMaterialCost, _
+    soTesting, soWithHeld, soAMCFund, soFestAdv, soServiceTax, _
+    soOtherDed, soTenderCost, soAmtChq, soTotalDed As Currency
+    
+'All Sum Of Totals Declarations
+Public soTAmntOfEachVocher, soTInomeTax, soTVATTax, soTRoyalty, _
+    soTFSD, soTLWF, soTLBT, soTPT, soTGovtIns, _
+    soTSD, soTMaterialCost, soTTesting, soTWithHeld, _
+    soTAMCFund, soTFestAdv, soTServiceTax, soTOtherDed, _
+    soTTenderCost, soTAmtChq, soTTotalDed As Currency
+    
+Public minRows, CurrentSheetNo, iResults(3), c_Cheque, c_Date, cntr, iGap As Integer
+Public maxRows, counts, i, counterCheques, counterPaidToWhom, counterDates, curntChequeNo As Currency
+Public allCheques() As Currency
+Public allDates() As String
+Public allPaidToWhom()  As String
+Public totalUniqueDates, totalUniqueChqNo, curntDate, curntPaidToWhom, startOpenningBalance, lastClosingBalance As String
+
+Public Sub SumsOfEachRowInChequeNo()
+    soAmntOfEachVocher = soAmntOfEachVocher + Cells(i, colAmntOfEachVocher)
+    soInomeTax = soInomeTax + Cells(i, colInomeTax)
+    soVATTax = soVATTax + Cells(i, colVATTax)
+    soRoyalty = soRoyalty + Cells(i, colRoyalty)
+    soFSD = soFSD + Cells(i, colFSD)
+    soLWF = soLWF + Cells(i, colLWF)
+    soLBT = soLBT + Cells(i, colLBT)
+    soPT = soPT + Cells(i, colPT)
+    soGovtIns = soGovtIns + Cells(i, colGovtIns)
+    soSD = soSD + Cells(i, colSD)
+    soMaterialCost = soMaterialCost + Cells(i, colMaterialCost)
+    soTesting = soTesting + Cells(i, colTesting)
+    soWithHeld = soWithHeld + Cells(i, colWithHeld)
+    soTenderCost = soTenderCost + Cells(i, colTenderCost)
+    soAMCFund = soAMCFund + Cells(i, colAMCFund)
+    soFestAdv = soFestAdv + Cells(i, colFestAdv)
+    soServiceTax = soServiceTax + Cells(i, colServiceTax)
+    soOtherDed = soOtherDed + Cells(i, colOtherDed)
+    soTotalDed = soTotalDed + Cells(i, colTotalDed)
+    soAmtChq = soAmtChq + Cells(i, colAmtChq)
+End Sub
+Public Sub AssignValuesToCells()
+    Cells(i, colCodeNo).Value = "Sub Total: "
+    Cells(i, colAmntOfEachVocher) = soAmntOfEachVocher
+    soTAmntOfEachVocher = soTAmntOfEachVocher + soAmntOfEachVocher
+    
+    Cells(i, colInomeTax) = soInomeTax
+    soTInomeTax = soTInomeTax + soInomeTax
+    
+    Cells(i, colVATTax) = soVATTax
+    soTVATTax = soTVATTax + soVATTax
+    
+    Cells(i, colRoyalty) = soRoyalty
+    soTRoyalty = soTRoyalty + soRoyalty
+    
+    Cells(i, colFSD) = soFSD
+    soTFSD = soTFSD + soFSD
+    
+    Cells(i, colLWF) = soLWF
+    soTLWF = soTLWF + soLWF
+    
+    Cells(i, colLBT) = soLBT
+    soTLBT = soTLBT + soLBT
+    
+    Cells(i, colPT) = soPT
+    soTPT = soTPT + soPT
+    
+    Cells(i, colGovtIns) = soGovtIns
+    soTGovtIns = soTGovtIns + soGovtIns
+    
+    Cells(i, colSD) = soSD
+    soTSD = soTSD + soSD
+    
+    Cells(i, colMaterialCost) = soMaterialCost
+    soTMaterialCost = soTMaterialCost + soMaterialCost
+    
+    Cells(i, colTesting) = soTesting
+    soTTesting = soTTesting + soTesting
+    
+    Cells(i, colWithHeld) = soWithHeld
+    soTWithHeld = soTWithHeld + soWithHeld
+    
+    Cells(i, colTenderCost) = soTenderCost
+    soTTenderCost = soTTenderCost + soTenderCost
+    
+    Cells(i, colAMCFund) = soAMCFund
+    soTAMCFund = soTAMCFund + soAMCFund
+    
+    Cells(i, colFestAdv) = soFestAdv
+    soTFestAdv = soTFestAdv + soFestAdv
+    
+    Cells(i, colServiceTax) = soServiceTax
+    soTServiceTax = soTServiceTax + soServiceTax
+    
+    Cells(i, colOtherDed).NumberFormat = "General"
+    Cells(i, colOtherDed) = soOtherDed
+    soTOtherDed = soTOtherDed + soOtherDed
+    
+     
+    soTTotalDed = soTTotalDed + soTotalDed
+    Cells(i, colTotalDed).NumberFormat = "General"
+    Cells(i, colTotalDed) = CStr(soTotalDed)
+    
+    Cells(i, colAmtChq).NumberFormat = "General"
+    Cells(i, colAmtChq) = soAmtChq
+    soTAmtChq = soTAmtChq + soAmtChq
+End Sub
+Public Sub InitColValues()
+    minRows = 4 'CInt(InputBox("Enter Start Value", "Start Value", "4"))
+    maxRows = 1000 'CInt(InputBox("Enter Last Value", "Last Value", "1000"))
+    CurrentSheetNo = 19 'CInt(InputBox("Enter Sheet No", "Sheet No", "19"))
+    c_Cheque = 1
+    c_Date = 1
+
+    ReDim allCheques(maxRows) As Currency
+    ReDim allDates(maxRows) As String
+    ReDim allPaidToWhom(maxRows) As String
+    
+    counts = 0
+    counterPaidToWhom = 1
+    counterCheques = 1
+    counterDates = 1
+
+    iGap = 26
+
+    colDate = 8
+    colPaidToWhom = 10
+    colCodeNo = 12
+    colAmntOfEachVocher = 15
+    colInomeTax = 18
+    colVATTax = 19
+    colRoyalty = 20
+    colFSD = 23
+    colLWF = 24
+    colLBT = 25
+    colPT = 26
+    colGovtIns = 27
+    colSD = 28
+    colMaterialCost = 29
+    colTesting = 30
+    colWithHeld = 31
+    colTenderCost = 32
+    colAMCFund = 33
+    colFestAdv = 34
+    colServiceTax = 35
+    colOtherDed = 36
+    colTotalDed = 37
+    colAmtChq = 38
+    colChequeNo = 39
+
+    curntChequeNo = Cells(minRows, colChequeNo)
+    allCheques(counterCheques) = curntChequeNo
+    
+    curntDate = Cells(minRows, colDate)
+    allDates(counterDates) = curntDate
+    
+    'curntPaidToWhom = Cells(minRows, colPaidToWhom)
+    'allPaidToWhom(0) = curntPaidToWhom
+End Sub
+Public Sub ResetSubTotalValues()
+    soTAmntOfEachVocher = 0
+    soTInomeTax = 0
+    soTVATTax = 0
+    soTRoyalty = 0
+    soTFSD = 0
+    soTLWF = 0
+    soTLBT = 0
+    soTPT = 0
+    soTGovtIns = 0
+    soTSD = 0
+    soTMaterialCost = 0
+    soTTesting = 0
+    soTWithHeld = 0
+    soTTenderCost = 0
+    soTAMCFund = 0
+    soTFestAdv = 0
+    soTServiceTax = 0
+    soTOtherDed = 0
+    soTTotalDed = 0
+    soTAmtChq = 0
+End Sub
+Public Sub ResetSumOfValues()
+    soAmntOfEachVocher = 0
+    soInomeTax = 0
+    soVATTax = 0
+    soRoyalty = 0
+    soFSD = 0
+    soLWF = 0
+    soLBT = 0
+    soPT = 0
+    soGovtIns = 0
+    soSD = 0
+    soMaterialCost = 0
+    soTesting = 0
+    soWithHeld = 0
+    soTenderCost = 0
+    soAMCFund = 0
+    soFestAdv = 0
+    soServiceTax = 0
+    soOtherDed = 0
+    soTotalDed = 0
+    soAmtChq = 0
+End Sub
+
+
+
